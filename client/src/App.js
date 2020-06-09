@@ -1,25 +1,13 @@
-import React, { Component } from 'react';
-import './App.css';
+import React from 'react';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
+import MainPage from './components/MainPage/';
+import Chat from './components/Chat/';
 
-class App extends Component {
-  state = {users: []}
-
-  componentDidMount() {
-    fetch('/users')
-      .then(res => res.json())
-      .then(users => this.setState({ users }));
-  }
-
-  render() {
-    return (
-      <div className="App">
-        <h1>Users</h1>
-        {this.state.users.map(user =>
-          <div key={user.id}>{user.username}</div>
-        )}
-      </div>
-    );
-  }
+export default function App () {
+  return (
+    <Router>
+      <Route path="/" exact component={MainPage} />
+      <Route path="/chat" component={Chat} />
+    </Router>
+  );
 }
-
-export default App;

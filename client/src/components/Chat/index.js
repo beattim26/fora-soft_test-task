@@ -11,8 +11,14 @@ export default function Chat({ location }) {
     const { username, roomname } = queryString.parse(location.search);
 
     socket = io(endPoint);
-    socket.emit('chat', { username, roomname });
-  }, [location]);
+    socket.emit('chat', { username, roomname }, () => {});
+
+    return () => {
+      socket.emit('disconnect');
+
+      socket.off();
+    };
+  }, [endPoint, location.search]);
 
   return <h1>Chat</h1>;
 }

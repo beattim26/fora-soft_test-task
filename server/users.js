@@ -1,16 +1,13 @@
 const users = [];
 
-const addUser = ({ id, name, room }) => {
-  name = name.trim().toLowerCase();
-  room = room.trim().toLowerCase();
-
+const addUser = ({ id, username, roomname }) => {
   const existingUser = users.find(
-    (user) => user.room === room && user.name === name
+    (user) => user.room === roomname && user.name === username
   );
 
-  if (existingUser) return { error: 'Username is taken' };
+  // if (existingUser) return { error: 'Username is taken' };
 
-  const user = { id, name, room };
+  const user = { id, username, roomname };
 
   users.push(user);
 
@@ -18,13 +15,13 @@ const addUser = ({ id, name, room }) => {
 };
 
 const removeUser = (id) => {
-  const user = users.findIndex((user) => isSecureContext.id === id);
+  const user = users.findIndex((user) => user.id === id);
 
   if (user !== -1) return users.splice(user, 1)[0];
 };
 
-const getUser = () => users.find((user) => user.id === id);
+const getUser = (id) => users.find((user) => user.id === id);
 
-const getUsers = () => users.filter((user) => user.room === room);
+const getUsers = (room) => users.filter((user) => user.room === room);
 
 module.exports = { addUser, removeUser, getUser, getUsers };

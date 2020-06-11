@@ -12,17 +12,22 @@ const { addUser, removeUser, getUser, getUsers } = require('./users');
 
 io.on('connection', (socket) => {
   socket.on('chat', ({ username, roomname }, cb) => {
-    const { user, error } = addUser({ id: socket.id, name, room });
+    const { user, error } = addUser({ id: socket.id, username, roomname });
+    const date = new Date();
 
     if (error) return cb(error);
 
     socket.emit('message', {
-      user: 'admin',
-      text: `${user.name}, welcome to ${user.room}`,
+      user: 'chatbot',
+      text: `${user.username}, welcome to ${user.roomname}`,
+      date: `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`,
     });
     socket.broadcast
       .to(user.room)
-      .emit('message', { user: 'admin', text: `${user.name}, has joined.` });
+      .emit('message', {
+        user: 'chatbot',
+        text: `${user.username}, has joined.`,
+      });
 
     socket.join(user.room);
 
@@ -32,7 +37,11 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', (message, cb) => {
     const user = getUser(socket.id);
 
-    io.to(user.room).emit('message', { user: user.name, text: message });
+    io.to(user.room).emit('message', {
+      user: user.username,
+      text: message.text,
+      date: message.date,
+    });
 
     cb();
   });

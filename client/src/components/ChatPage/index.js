@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useHistory } from 'react-router-dom';
 import queryString from 'query-string';
 import io from 'socket.io-client';
 import Container from '@material-ui/core/Container';
@@ -6,10 +7,13 @@ import ChatInput from '../ChatInput/';
 import Card from '@material-ui/core/Card';
 import CardHeader from '@material-ui/core/CardHeader';
 import IconButton from '@material-ui/core/IconButton';
-import MoreVertIcon from '@material-ui/icons/MoreVert';
-import Popover from '@material-ui/core/Popover';
-import Typography from '@material-ui/core/Typography';
+import Tooltip from '@material-ui/core/Tooltip';
 import ChatMessages from '../ChatMessages/';
+import CloseIcon from '@material-ui/icons/Close';
+import VisibilityIcon from '@material-ui/icons/Visibility';
+import ModalUsername from '../ModalUsername/';
+import ModalOnlineUsers from '../ModalOnlineUsers/';
+import { Typography } from '@material-ui/core';
 import useStyles from './styles';
 
 let socket;
@@ -17,22 +21,18 @@ let socket;
 export default function Chat({ location }) {
   const classes = useStyles();
   const connection = 'localhost:3001';
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(localStorage.getItem('username'));
   const [roomName, setRoomName] = useState('');
   const [users, setUsers] = useState('');
   const [message, setMessage] = useState({ text: '', date: '' });
   const [messages, setMessages] = useState([]);
-  const [anchorEl, setAnchorEl] = React.useState(null);
-  const openPopover = Boolean(anchorEl);
-  const id = openPopover ? 'simple-popover' : undefined;
+  const [isModalUserOpen, setIsModalUserOpen] = useState(false);
+  const [isModalOnlineOpen, setIsModalOnlineOpen] = useState(false);
+  const history = useHistory();
 
-  const handleClickPopover = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClosePopover = () => {
-    setAnchorEl(null);
-  };
+  const modalOnlineUsers = !isModalOnlineOpen ? (
+    <ModalOnlineUsers open={isModalOnlineOpen} setOpen={setIsModalOnlineOpen} />
+  ) : null;
 
   const handleInput = (event) => {
     const { value } = event.target;
@@ -40,58 +40,82 @@ export default function Chat({ location }) {
     setMessage({ ...message, text: value });
   };
 
-  useEffect(() => {
-    const { username, roomname } = queryString.parse(location.search);
+  const handleClose = () => {
+    socket.off();
+    localStorage.removeItem('username');
+    history.push('/');
+  };
 
+  const handleSeeOnline = () => {
+    setIsModalOnlineOpen(true);
+  };
+
+  useEffect(() => {
     socket = io(connection);
-
-    setRoomName(roomname);
-    setUserName(username);
-
-    socket.emit('chat', { username, roomname }, (err) => {
-      if (err) alert(err);
-    });
-  }, [connection, location.search]);
-
-  useEffect(() => {
     socket.on('message', (message) => {
       setMessages((messages) => [...messages, message]);
     });
 
-    socket.on('room', ({ users }) => {
+    socket.on('roomData', ({ users }) => {
       setUsers(users);
     });
   }, []);
 
+  useEffect(() => {
+    const roomName = queryString.parse(location.search).roomname;
+    setRoomName(roomName);
+
+    if (userName) {
+      socket.emit('chat', { userName, roomName }, (err) => {
+        if (err === 'Set your name') {
+          console.log(userName);
+        }
+      });
+    } else {
+      setIsModalUserOpen(true);
+    }
+  }, [connection, location.search, userName]);
+
   const sendMessage = (event) => {
+    console.log(users);
     event.preventDefault();
 
     if (message) {
       const date = new Date();
       const messageToSend = message;
 
-      messageToSend.date = `${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+      messageToSend.date = `${date.getHours()}:${String(
+        date.getMinutes()
+      ).padStart(2, '0')}`;
       socket.emit('sendMessage', messageToSend, () =>
         setMessage({ text: '', date: '' })
       );
     }
   };
 
-  console.log(message, messages);
-
-  return (
+  return !isModalUserOpen ? (
     <Container component="main" maxWidth="sm">
-      <h1>{roomName}</h1>
+      <Typography variant="h4" className={classes.title}>
+        Chat: {roomName}
+      </Typography>
       <Card variant="outlined" className={classes.card}>
         <CardHeader
+          avatar={
+            <Tooltip title="Click to see who is online now">
+              <IconButton
+                className={classes.moreIcon}
+                onClick={handleSeeOnline}
+              >
+                <VisibilityIcon />
+              </IconButton>
+            </Tooltip>
+          }
           action={
-            <IconButton
-              aria-label="settings"
-              onClick={handleClickPopover}
-              className={classes.moreIcon}
-            >
-              <MoreVertIcon />
-            </IconButton>
+            <Tooltip title="Leave">
+              <IconButton className={classes.closeIcon} onClick={handleClose}>
+                <CloseIcon />
+              </IconButton>
+            </Tooltip>
           }
           className={classes.cardHeader}
         />
@@ -102,24 +126,13 @@ export default function Chat({ location }) {
           sendMessage={sendMessage}
         />
       </Card>
-      <Popover
-        id={id}
-        open={openPopover}
-        anchorEl={anchorEl}
-        onClose={handleClosePopover}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-      >
-        <Typography className={classes.typography}>
-          The content of the Popover.
-        </Typography>
-      </Popover>
+      {modalOnlineUsers}
     </Container>
+  ) : (
+    <ModalUsername
+      open={isModalUserOpen}
+      setOpen={setIsModalUserOpen}
+      setUserName={setUserName}
+    />
   );
 }

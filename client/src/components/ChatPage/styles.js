@@ -11,7 +11,15 @@ export default makeStyles((theme) => ({
   cardHeader: {
     padding: '0',
   },
+  closeIcon: {
+    padding: '0',
+  },
   moreIcon: {
     padding: '0',
-  }
+    marginTop: '-8px',
+    marginRight: '-8px',
+  },
+  title: {
+    margin: '15px 0',
+  },
 }));

@@ -31,8 +31,14 @@ export default function MainPage() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleLink = (event) => 
-    !formData.userName || !formData.roomName ? event.preventDefault() : null;
+  const handleLink = (event) => {
+    if (!formData.userName || !formData.roomName) {
+      event.preventDefault()
+      return;
+    }
+
+    localStorage.setItem('username', formData.userName);
+  }
 
   return (
     <Container component='main' maxWidth='sm'>
@@ -65,7 +71,7 @@ export default function MainPage() {
           />
           <Link
             className={classes.link}
-            to={`/chat?username=${formData.userName}&roomname=${formData.roomName}`}
+            to={`/chat?roomname=${formData.roomName}`}
             onClick={handleLink}
           >
             <Button

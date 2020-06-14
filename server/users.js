@@ -1,14 +1,7 @@
 const users = [];
 
 const addUser = ({ id, userName, roomName }) => {
-  if (!userName) return { error: 'Set your name' };
-  const existingUser = users.find(
-    (user) => user.roomName === roomName && user.userName === userName
-  );
-
-  // if (existingUser) return { error: 'Username is taken' };
-
-  const user = { id, userName, roomName };
+  const user = { id, userName, roomName }; // add new user in users array
 
   users.push(user);
 

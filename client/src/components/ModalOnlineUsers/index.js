@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Modal from '@material-ui/core/Modal';
 import Backdrop from '@material-ui/core/Backdrop';
 import Fade from '@material-ui/core/Fade';
+import Typography from '@material-ui/core/Typography';
 import useStyles from './styles';
 
-export default function ModalUsername({ open, setOpen }) {
+export default function ModalOnlineUsers({ open, setOpen, users }) {
   const classes = useStyles();
 
   return (
@@ -13,7 +14,7 @@ export default function ModalUsername({ open, setOpen }) {
       aria-describedby="transition-modal-description"
       className={classes.modal}
       open={open}
-      onClose={setOpen(false)}
+      onClose={setOpen}
       closeAfterTransition
       BackdropComponent={Backdrop}
       BackdropProps={{
@@ -21,7 +22,11 @@ export default function ModalUsername({ open, setOpen }) {
       }}
     >
       <Fade in={open}>
-        <div className={classes.paper}></div>
+        <div className={classes.paper}>
+          {users.map((user, item) => (
+            <Typography key={item}>{user.userName}</Typography>
+          ))}
+        </div>
       </Fade>
     </Modal>
   );

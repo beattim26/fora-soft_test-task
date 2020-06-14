@@ -9,15 +9,12 @@ export default function ChatInput({ message, setMessage, sendMessage }) {
   const classes = useStyles();
 
   return (
-    <form className={classes.form}>
+    <form className={classes.form} onSubmit={sendMessage}>
       <TextField
         label="Write a message..."
         onChange={setMessage}
         value={message}
         fullWidth
-        onKeyPress={(event) =>
-          event.key === 'Enter' ? sendMessage(event) : null
-        }
       />
       <Tooltip title="Send">
         <IconButton
@@ -25,6 +22,8 @@ export default function ChatInput({ message, setMessage, sendMessage }) {
           aria-label="Send message"
           component="span"
           onClick={sendMessage}
+          disabled={!message}
+          type="submit"
         >
           <SendIcon />
         </IconButton>

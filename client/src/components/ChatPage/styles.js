@@ -19,7 +19,4 @@ export default makeStyles((theme) => ({
     marginTop: '-8px',
     marginRight: '-8px',
   },
-  title: {
-    margin: '15px 0',
-  },
 }));

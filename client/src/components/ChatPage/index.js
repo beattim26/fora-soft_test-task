@@ -13,26 +13,20 @@ import CloseIcon from '@material-ui/icons/Close';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import ModalUsername from '../ModalUsername/';
 import ModalOnlineUsers from '../ModalOnlineUsers/';
-import { Typography } from '@material-ui/core';
 import useStyles from './styles';
 
 let socket;
 
 export default function Chat({ location }) {
   const classes = useStyles();
-  const connection = 'localhost:3001';
+  const connection = 'https://fora-soft-onlinechat.herokuapp.com/';
   const [userName, setUserName] = useState(localStorage.getItem('username'));
-  const [roomName, setRoomName] = useState('');
-  const [users, setUsers] = useState('');
+  const [users, setUsers] = useState([]);
   const [message, setMessage] = useState({ text: '', date: '' });
   const [messages, setMessages] = useState([]);
   const [isModalUserOpen, setIsModalUserOpen] = useState(false);
   const [isModalOnlineOpen, setIsModalOnlineOpen] = useState(false);
   const history = useHistory();
-
-  const modalOnlineUsers = !isModalOnlineOpen ? (
-    <ModalOnlineUsers open={isModalOnlineOpen} setOpen={setIsModalOnlineOpen} />
-  ) : null;
 
   const handleInput = (event) => {
     const { value } = event.target;
@@ -41,13 +35,16 @@ export default function Chat({ location }) {
   };
 
   const handleClose = () => {
-    socket.off();
-    localStorage.removeItem('username');
+    socket.disconnect();
     history.push('/');
   };
 
   const handleSeeOnline = () => {
-    setIsModalOnlineOpen(true);
+    socket.on('roomData', ({ users }) => {
+      // get users in the room
+      setUsers(users);
+    });
+    setIsModalOnlineOpen(!isModalOnlineOpen);
   };
 
   useEffect(() => {
@@ -57,27 +54,22 @@ export default function Chat({ location }) {
     });
 
     socket.on('roomData', ({ users }) => {
+      // get users in the room
       setUsers(users);
     });
   }, []);
 
   useEffect(() => {
-    const roomName = queryString.parse(location.search).roomname;
-    setRoomName(roomName);
+    const roomName = queryString.parse(location.search).roomname; // get room name from query string
 
     if (userName) {
-      socket.emit('chat', { userName, roomName }, (err) => {
-        if (err === 'Set your name') {
-          console.log(userName);
-        }
-      });
+      socket.emit('chat', { userName, roomName }, () => {});
     } else {
-      setIsModalUserOpen(true);
+      setIsModalUserOpen(true); // open popup with the form for new users
     }
   }, [connection, location.search, userName]);
 
   const sendMessage = (event) => {
-    console.log(users);
     event.preventDefault();
 
     if (message) {
@@ -95,9 +87,6 @@ export default function Chat({ location }) {
 
   return !isModalUserOpen ? (
     <Container component="main" maxWidth="sm">
-      <Typography variant="h4" className={classes.title}>
-        Chat: {roomName}
-      </Typography>
       <Card variant="outlined" className={classes.card}>
         <CardHeader
           avatar={
@@ -126,7 +115,11 @@ export default function Chat({ location }) {
           sendMessage={sendMessage}
         />
       </Card>
-      {modalOnlineUsers}
+      <ModalOnlineUsers
+        open={isModalOnlineOpen}
+        setOpen={handleSeeOnline}
+        users={users}
+      />
     </Container>
   ) : (
     <ModalUsername

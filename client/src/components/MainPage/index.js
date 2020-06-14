@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
+import io from 'socket.io-client';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import Avatar from '@material-ui/core/Avatar';
@@ -8,82 +9,81 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import MaterialLInk from '@material-ui/core/Link';
 import Box from '@material-ui/core/Box';
+import { checkName } from '../../scripts/validation';
 import useStyles from './styles';
+
+let socket;
 
 function Developed() {
   return (
-    <Typography variant='body2' color='textSecondary' align='center'>
+    <Typography variant="body2" color="textSecondary" align="center">
       {'Developed by '}
-      <MaterialLInk href='https://github.com/beattim26'>beattim26</MaterialLInk>
+      <MaterialLInk href="https://github.com/beattim26">beattim26</MaterialLInk>
     </Typography>
   );
 }
 
 export default function MainPage() {
   const classes = useStyles();
-  const [formData, setFormData] = useState({
-    userName: '',
-    roomName: '',
-  });
+  const history = useHistory();
+  const connection = 'https://fora-soft-onlinechat.herokuapp.com/';
+  const [userName, setUserName] = useState('');
+  const [isValidName, setisValidName] = useState(false);
 
   const handleInput = (event) => {
-    const { name, value } = event.target;
-    setFormData({ ...formData, [name]: value });
+    const { value } = event.target;
+
+    setisValidName(!checkName(value)); // validation for inputs
+    setUserName(value); // set new values from inputs
   };
 
-  const handleLink = (event) => {
-    if (!formData.userName || !formData.roomName) {
-      event.preventDefault()
-      return;
-    }
+  const handleSubmit = (event) => {
+    event.preventDefault();
+  
+    if (isValidName) return; // check if something wrong with the name
 
-    localStorage.setItem('username', formData.userName);
-  }
+    localStorage.setItem('username', userName); // set username
+    socket = io(connection);
+    socket.emit('chat', { userName }, (id) => {
+      history.push(`/chat?roomname=${id}`); // redirect to the room
+    });
+  };
 
   return (
-    <Container component='main' maxWidth='sm'>
+    <Container component="main" maxWidth="sm">
       <div className={classes.paper}>
         <Avatar className={classes.avatar}>
           <ChatIcon />
         </Avatar>
-        <Typography component='h1' variant='h5'>
+        <Typography component="h1" variant="h5">
           Create your chat room
         </Typography>
-        <div className={classes.form}>
+        <form className={classes.form} onSubmit={handleSubmit}>
           <TextField
-            variant='outlined'
-            margin='normal'
+            variant="outlined"
+            margin="normal"
+            error={isValidName}
+            helperText={
+              isValidName
+                ? 'Please, write something else.'
+                : 'Enter the name for your new chat room.'
+            }
             required
             fullWidth
-            label='Room name'
-            name='roomName'
-            autoFocus
+            label="Your name"
             onChange={handleInput}
           />
-          <TextField
-            variant='outlined'
-            margin='normal'
-            required
+          <Button
             fullWidth
-            label='Your name'
-            name='userName'
-            onChange={handleInput}
-          />
-          <Link
-            className={classes.link}
-            to={`/chat?roomname=${formData.roomName}`}
-            onClick={handleLink}
+            variant="contained"
+            color="primary"
+            className={classes.submit}
+            type="submit"
+            disabled={!userName || isValidName}
           >
-            <Button
-              fullWidth
-              variant='contained'
-              color='primary'
-              className={classes.submit}
-            >
-              Create chat
-            </Button>
-          </Link>
-        </div>
+            Create chat
+          </Button>
+        </form>
       </div>
       <Box mt={8}>
         <Developed />
